@@ -1,0 +1,13 @@
+### Teste 1: Criar uma nova despesa (POST)
+POST http://localhost:8080/despesas
+Content-Type: application/json
+
+{
+  "descricao": "Pizza de Calabresa",
+  "valor": 45.50,
+  "data": "2023-12-10",
+  "categoria": "Alimentação"
+}
+
+### Teste 2: Listar todas as despesas (GET)
+GET http://localhost:8080/despesas
