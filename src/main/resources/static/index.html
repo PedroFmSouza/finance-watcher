@@ -5,384 +5,443 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet Watcher Pro</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-
         :root {
-            --primary: #6c5ce7;
-            --secondary: #a29bfe;
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.3);
-            --text-dark: #2d3436;
-            --text-light: #636e72;
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --bg-body: #f4f7fc;
+            --text-dark: #2c3e50;
+            --border-light: 1px solid rgba(0,0,0,0.05);
             --success: #00b894;
             --danger: #d63031;
+            --card-hover: translateY(-3px);
+            --gold: #f1c40f;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 
         body {
-            background: var(--bg-gradient);
-            min-height: 100vh;
+            background-color: var(--bg-body);
+            height: 100vh;
             display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-            color: var(--text-dark);
+            overflow: hidden;
         }
-
-        .app-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px); /* Efeito de vidro */
-            width: 100%;
-            max-width: 1100px;
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            border: var(--glass-border);
-            display: grid;
-            grid-template-columns: 300px 1fr; /* Menu lateral + Conteúdo */
-            gap: 30px;
-        }
-
 
         .sidebar {
-            border-right: 1px solid #eee;
-            padding-right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            width: 200px; background: white; display: flex; flex-direction: column; padding: 20px;
+            border-right: var(--border-light); box-shadow: 2px 0 10px rgba(0,0,0,0.02); z-index: 10;
+        }
+        .logo { font-size: 18px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; margin-bottom: 40px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-radius: 8px;
+            color: #7f8c8d; cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 14px; margin-bottom: 5px;
+        }
+        .nav-item:hover { background: #f0f3ff; color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(78, 84, 200, 0.3); }
+
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeUp 0.4s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .page-header { margin-bottom: 20px; } .page-header h2 { font-size: 24px; color: var(--text-dark); } .page-header p { color: #95a5a6; font-size: 13px; }
+        .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: var(--border-light); position: relative; overflow: hidden; }
+        .card label { font-size: 12px; color: #95a5a6; display: block; margin-bottom: 5px; z-index: 2; position: relative; }
+        .card .val { font-size: 20px; font-weight: 600; color: var(--text-dark); z-index: 2; position: relative; }
+        .card.highlight { background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+        .card.highlight label { color: rgba(255,255,255,0.8); } .card.highlight .val { color: white; }
+        .card-decor { position: absolute; right: -20px; top: -20px; font-size: 100px; opacity: 0.05; color: black; z-index: 1; }
+
+        .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .chart-box, .form-box { background: white; padding: 20px; border-radius: 12px; border: var(--border-light); }
+        .chart-box { height: 350px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .form-box { height: fit-content; }
+
+        .chart-center-text {
+            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none;
+        }
+        .chart-label { font-size: 12px; color: #aaa; }
+        .chart-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 6px; outline: none; font-size: 13px; }
+        input:focus { border-color: var(--primary); }
+        .btn-save { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.3s; }
+        .btn-save:hover { opacity: 0.9; }
+
+        .currency-grid, .vitrine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .currency-card, .vitrine-card {
+            background: white; padding: 20px; border-radius: 12px; border: var(--border-light);
+            text-align: center; transition: 0.3s; cursor: pointer; position: relative; overflow: hidden;
+        }
+        .currency-card:hover, .vitrine-card:hover { transform: var(--card-hover); border-color: var(--secondary); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .vitrine-card.destaque { border: 2px solid var(--primary); background: #f4f7fc; }
+
+        .flag-img { height: 40px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 0 auto 10px auto; display: block; }
+        .curr-val, .v-rate { font-size: 18px; font-weight: 700; color: var(--text-dark); margin: 5px 0; }
+        .curr-var.up { color: var(--success); } .curr-var.down { color: var(--danger); }
+        .v-icon { font-size: 30px; margin-bottom: 10px; } .v-title { font-weight: 700; color: var(--text-dark); margin-bottom: 5px; } .v-desc { font-size: 11px; color: #888; } .v-rate { color: var(--success); }
+
+        .inv-form {
+            background: white; padding: 25px; border-radius: 16px; border: var(--border-light);
+            display: none; margin-bottom: 30px; border-left: 5px solid var(--primary);
+        }
+        .inv-summary { margin-bottom: 30px; }
+        .inv-card-total {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 20px rgba(78, 84, 200, 0.3);
         }
 
-        .logo {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+        .inv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .inv-item {
+            background: white; padding: 20px; border-radius: 12px; border: var(--border-light);
+            border-left: 5px solid var(--secondary); transition: 0.3s; position: relative;
         }
+        .inv-item:hover { transform: var(--card-hover); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .inv-title { font-weight: 600; color: var(--text-dark); }
+        .inv-detail { font-size: 12px; color: #999; margin-bottom: 15px; }
+        .inv-values { display: flex; justify-content: space-between; align-items: end; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+        .inv-profit { color: var(--success); font-weight: 700; font-size: 14px; }
+        .inv-current { font-size: 20px; font-weight: 700; color: var(--text-dark); }
 
-        .balance-card {
-            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+        .btn-resgate {
+            position: absolute; top: 10px; right: 10px;
+            background: #ffeaea; color: var(--danger); border: none;
+            padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: bold;
+            cursor: pointer; transition: 0.2s;
         }
-        .balance-card span { font-size: 14px; opacity: 0.8; }
-        .balance-card h2 { font-size: 28px; margin-top: 5px; }
+        .btn-resgate:hover { background: var(--danger); color: white; }
 
-        .mini-stats { display: flex; flex-direction: column; gap: 10px; }
-        .stat-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; border-radius: 12px; background: #f8f9fa;
-        }
-        .stat-item.in { border-left: 4px solid var(--success); }
-        .stat-item.out { border-left: 4px solid var(--danger); }
-        .stat-label { font-size: 12px; color: var(--text-light); }
-        .stat-value { font-weight: 600; }
-
-
-        .chart-container {
-            margin-top: auto;
-            position: relative;
-            height: 200px;
-        }
-
-
-        .main-content { display: flex; flex-direction: column; gap: 25px; }
-
-
-        .new-transaction {
-            background: #fff;
-            padding: 20px;
-            border-radius: 16px;
-            border: 1px solid #eee;
-        }
-        .form-title { font-size: 18px; margin-bottom: 15px; font-weight: 600; }
-
-        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
-
-        input, select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #f0f0f0;
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-            transition: 0.3s;
-            background: #fdfdfd;
-        }
-        input:focus, select:focus { border-color: var(--primary); background: #fff; }
-
-        .btn-add {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: 0.3s;
-            width: 100%;
-        }
-        .btn-add:hover { background: #5649c0; transform: translateY(-2px); }
-
-
-        .transactions-list { overflow-y: auto; max-height: 400px; padding-right: 5px; }
-        .transaction-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border: 1px solid #f0f0f0;
-            transition: 0.2s;
-        }
-        .transaction-item:hover { transform: scale(1.01); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-
-        .t-icon {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-        }
-        .t-info { flex: 1; margin-left: 15px; }
-        .t-title { font-weight: 600; font-size: 14px; color: var(--text-dark); }
-        .t-date { font-size: 12px; color: var(--text-light); }
-        .t-amount { font-weight: 600; }
-        .money-in { color: var(--success); }
-        .money-out { color: var(--danger); background: #ffeaea; }
-        .icon-in { background: #e0f9f4; color: var(--success); }
-        .icon-out { background: #ffeaea; color: var(--danger); }
-
-
-        .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
-        .type-option {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            border-radius: 10px;
-            cursor: pointer;
-            border: 2px solid #f0f0f0;
-            font-weight: 600;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        input[type="radio"] { display: none; }
-        input[type="radio"]:checked + .type-option.opt-in {
-            background: #e0f9f4; border-color: var(--success); color: var(--success);
-        }
-        input[type="radio"]:checked + .type-option.opt-out {
-            background: #ffeaea; border-color: var(--danger); color: var(--danger);
-        }
-
+        .mini-item { font-size: 12px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="sidebar">
-        <div class="logo">
-            <i class="ph ph-wallet"></i> WalletWatcher
-        </div>
+<div class="sidebar">
+    <div class="logo"><i class="ph ph-wallet" style="font-size: 24px;"></i> Wallet</div>
+    <div class="nav-item active" onclick="navegar('financeiro', this)"><i class="ph ph-chart-pie-slice" style="font-size: 20px;"></i> Resumo</div>
+    <div class="nav-item" onclick="navegar('cambio', this)"><i class="ph ph-globe-hemisphere-west" style="font-size: 20px;"></i> Câmbio</div>
+    <div class="nav-item" onclick="navegar('investimentos', this)"><i class="ph ph-trend-up" style="font-size: 20px;"></i> Carteira</div>
+</div>
 
-        <div class="balance-card">
-            <span>Saldo Total</span>
-            <h2 id="display-saldo">R$ 0,00</h2>
-        </div>
+<div class="main-content">
 
-        <div class="mini-stats">
-            <div class="stat-item in">
-                <div>
-                    <div class="stat-label">Entradas</div>
-                    <div class="stat-value" id="display-receitas">R$ 0,00</div>
-                </div>
-                <i class="ph ph-arrow-circle-down" style="color: var(--success); font-size: 24px;"></i>
+    <div id="financeiro" class="section active">
+        <div class="page-header"><h2>Visão Geral</h2><p>Fluxo de caixa e saúde financeira.</p></div>
+
+        <div class="summary-cards">
+            <div class="card highlight">
+                <i class="ph ph-wallet card-decor" style="color:white;"></i>
+                <label>Saldo Disponível</label><div class="val" id="display-saldo">R$ 0,00</div>
             </div>
-            <div class="stat-item out">
-                <div>
-                    <div class="stat-label">Saídas</div>
-                    <div class="stat-value" id="display-despesas">R$ 0,00</div>
-                </div>
-                <i class="ph ph-arrow-circle-up" style="color: var(--danger); font-size: 24px;"></i>
+            <div class="card">
+                <i class="ph ph-trend-up card-decor" style="color:var(--success);"></i>
+                <label>Entradas do Mês</label><div class="val" style="color: var(--success);" id="display-receitas">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <i class="ph ph-trend-down card-decor" style="color:var(--danger);"></i>
+                <label>Saídas do Mês</label><div class="val" style="color: var(--danger);" id="display-despesas">R$ 0,00</div>
             </div>
         </div>
 
-        <div class="chart-container">
-            <canvas id="meuGrafico"></canvas>
+        <div class="dashboard-grid">
+            <div class="chart-box">
+                <h4 style="width:100%; text-align:left; margin-bottom:10px; color:var(--text-dark);">Destino do Dinheiro</h4>
+                <div style="position: relative; height: 250px; width: 250px;">
+                    <canvas id="meuGrafico"></canvas>
+                    <div class="chart-center-text">
+                        <div class="chart-label">Em Caixa</div>
+                        <div class="chart-value" id="chart-balanco">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-box">
+                <h4 style="margin-bottom: 15px;">Nova Transação</h4>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <label style="font-size: 12px; cursor: pointer;"><input type="radio" name="tipo" value="RECEITA" checked> Entrada</label>
+                    <label style="font-size: 12px; cursor: pointer;"><input type="radio" name="tipo" value="DESPESA"> Saída</label>
+                </div>
+                <div class="input-row"><input id="desc" placeholder="Descrição"></div>
+                <div class="input-row"><input id="valor" type="number" step="0.01" placeholder="Valor"></div>
+                <div class="input-row"><select id="cat"><option>Geral</option><option>Salário</option><option>Alimentação</option><option>Transporte</option><option>Investimento</option></select><input id="data" type="date"></div>
+                <button class="btn-save" onclick="cadastrar()">Salvar</button>
+                <div style="margin-top: 15px; max-height: 150px; overflow-y: auto;" id="mini-lista"></div>
+            </div>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="new-transaction">
-            <div class="form-title">Nova Transação</div>
-
-            <div class="type-toggle">
-                <label style="flex: 1;">
-                    <input type="radio" name="tipo" value="RECEITA" checked>
-                    <div class="type-option opt-in">Entrada</div>
-                </label>
-                <label style="flex: 1;">
-                    <input type="radio" name="tipo" value="DESPESA">
-                    <div class="type-option opt-out">Saída</div>
-                </label>
+    <div id="cambio" class="section">
+        <div class="page-header"><h2>Mercado Global</h2><p>Cotações em tempo real.</p></div>
+        <div class="currency-grid" id="grid-moedas"></div>
+        <div class="form-box" style="max-width: 600px; margin: 0 auto;">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Simulador</h3>
+            <div style="display: flex; gap: 15px; align-items: flex-end;">
+                <div style="flex: 1;"><label style="font-size: 12px;">Eu tenho (BRL)</label><input type="number" id="sim-brl" placeholder="100.00" oninput="calcular()"></div>
+                <div style="flex: 1;"><label style="font-size: 12px;">Comprar</label><select id="sim-moeda" onchange="calcular()"></select></div>
             </div>
-
-            <div class="input-group">
-                <input type="text" id="desc" placeholder="Descrição (Ex: Freelance, Pizza)">
-                <input type="number" id="valor" placeholder="R$ 0,00" step="0.01">
-            </div>
-            <div class="input-group">
-                <select id="cat">
-                    <option value="Salário">Salário</option>
-                    <option value="Investimento">Investimento</option>
-                    <option value="Alimentação">Alimentação</option>
-                    <option value="Transporte">Transporte</option>
-                    <option value="Casa">Casa</option>
-                    <option value="Lazer">Lazer</option>
-                </select>
-                <input type="date" id="data">
-            </div>
-
-            <button class="btn-add" onclick="cadastrar()">
-                <i class="ph ph-plus-circle" style="font-size: 20px;"></i>
-                Adicionar Transação
-            </button>
-        </div>
-
-        <h3 style="font-size: 16px; margin-top: 10px;">Últimas Movimentações</h3>
-        <div class="transactions-list" id="lista-transacoes">
+            <div style="margin-top: 20px; text-align: center; font-size: 22px; font-weight: 700;" id="sim-resultado">0.00</div>
         </div>
     </div>
+
+    <div id="investimentos" class="section">
+        <div class="page-header"><h2>Vitrine de Investimentos</h2><p>Dados oficiais do Banco Central em tempo real.</p></div>
+
+        <div class="vitrine-grid">
+            <div class="vitrine-card" onclick="selecionarInvestimento('Tesouro Selic', taxasOficiais.selic)">
+                <div class="v-icon">🦅</div>
+                <div class="v-title">Tesouro Selic</div>
+                <div class="v-rate" id="taxa-selic">...</div>
+                <div class="v-desc">Segurança máxima. Rende 100% da Selic.</div>
+            </div>
+            <div class="vitrine-card destaque" onclick="selecionarInvestimento('CDB do Banco', taxasOficiais.cdi)">
+                <div class="v-icon">🏦</div>
+                <div class="v-title">CDB de Liquidez</div>
+                <div class="v-rate" id="taxa-cdi">...</div>
+                <div class="v-desc">Rende 100% do CDI. Liquidez diária.</div>
+            </div>
+            <div class="vitrine-card" onclick="selecionarInvestimento('LCI Imobiliária', taxasOficiais.cdi * 0.90)">
+                <div class="v-icon">🏗️</div>
+                <div class="v-title">LCI / LCA</div>
+                <div class="v-rate" id="taxa-lci">...</div>
+                <div class="v-desc">Isento de Imposto de Renda.</div>
+            </div>
+            <div class="vitrine-card" onclick="selecionarInvestimento('CRA do Agro', taxasOficiais.cdi * 1.05)">
+                <div class="v-icon">🚜</div>
+                <div class="v-title">CRA do Agro</div>
+                <div class="v-rate" id="taxa-cra">...</div>
+                <div class="v-desc">Isento de IR. Risco moderado.</div>
+            </div>
+            <div class="vitrine-card" onclick="selecionarInvestimento('Debênture Energia', taxasOficiais.cdi * 1.20)">
+                <div class="v-icon">⚡</div>
+                <div class="v-title">Debênture Corp</div>
+                <div class="v-rate" id="taxa-deb">...</div>
+                <div class="v-desc">Maior risco, maior retorno.</div>
+            </div>
+        </div>
+
+        <div class="inv-form" id="area-aporte">
+            <h4 style="margin-bottom: 15px; color: var(--text-dark); display: flex; justify-content: space-between;">
+                Confirmar Aporte
+                <span style="font-size: 12px; color: #888; cursor: pointer;" onclick="fecharAporte()">❌ Cancelar</span>
+            </h4>
+            <div class="input-row"><input id="inv-desc" placeholder="Nome do Ativo" readonly style="background: #f0f0f0; font-weight: bold;"></div>
+            <div class="input-row">
+                <input id="inv-valor" type="number" placeholder="Valor a Investir (R$)">
+                <div style="flex: 1; position: relative;"><input id="inv-taxa" type="number" placeholder="Taxa" readonly style="background: #f0f0f0;"><span style="position: absolute; right: 10px; top: 12px; font-size: 10px; color: #666;">% a.m.</span></div>
+            </div>
+            <div class="input-row">
+                <input id="inv-data" type="date">
+                <button class="btn-save" onclick="cadastrarInvestimento()">Confirmar Investimento</button>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 15px; font-size: 16px; margin-top: 30px;">Minha Carteira</h3>
+        <div class="inv-summary">
+            <div class="inv-card-total" style="width: 100%;">
+                <label style="opacity: 0.8; font-size: 14px;">Total Acumulado</label>
+                <div style="font-size: 36px; font-weight: 700; margin-top: 5px;" id="inv-total-geral">R$ 0,00</div>
+                <div style="font-size: 14px; margin-top: 10px;"> Rendimento: <span id="inv-total-rendimento">+R$ 0,00</span></div>
+            </div>
+        </div>
+        <div class="inv-list" id="lista-investimentos"></div>
+    </div>
+
 </div>
 
 <script>
     const API_URL = 'http://localhost:8080/despesas';
+    const INV_URL = 'http://localhost:8080/investimentos';
+    const IND_URL = 'http://localhost:8080/indicadores';
+    const CAM_URL = 'http://localhost:8080/cambio';
+
+    const mapaMoedas = {
+        'USD': { nome: 'Dólar Americano', code: 'us', emoji: '🇺🇸' },
+        'EUR': { nome: 'Euro', code: 'eu', emoji: '🇪🇺' },
+        'GBP': { nome: 'Libra Esterlina', code: 'gb', emoji: '🇬🇧' },
+        'JPY': { nome: 'Iene Japonês', code: 'jp', emoji: '🇯🇵' },
+        'AUD': { nome: 'Dólar Australiano', code: 'au', emoji: '🇦🇺' },
+        'CAD': { nome: 'Dólar Canadense', code: 'ca', emoji: '🇨🇦' },
+        'CNY': { nome: 'Yuan Chinês', code: 'cn', emoji: '🇨🇳' },
+        'ARS': { nome: 'Peso Argentino', code: 'ar', emoji: '🇦🇷' },
+        'CHF': { nome: 'Franco Suíço', code: 'ch', emoji: '🇨🇭' },
+        'MXN': { nome: 'Peso Mexicano', code: 'mx', emoji: '🇲🇽' },
+        'ZAR': { nome: 'Rand Sul-Africano', code: 'za', emoji: '🇿🇦' },
+        'BTC': { nome: 'Bitcoin', code: 'btc', emoji: '₿' }
+    };
+
+    let taxasOficiais = { selic: 0, cdi: 0, poupanca: 0 };
     let graficoInstance = null;
 
-    function formatarMoeda(valor) {
-        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    function formatar(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+    function navegar(aba, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.getElementById(aba).classList.add('active');
+        btn.classList.add('active');
     }
 
-    function carregarDados() {
-        fetch(API_URL)
-            .then(res => res.json())
-            .then(dados => {
-                atualizarInterface(dados);
-                atualizarGrafico(dados);
+    // FINANCEIRO ATUALIZADO (3 VETORES)
+    function carregarFinanceiro() {
+        fetch(API_URL).then(r => r.json()).then(dados => {
+            const rec = dados.filter(i => i.tipo === 'RECEITA').reduce((a, b) => a + b.valor, 0);
+            const todasDespesas = dados.filter(i => i.tipo === 'DESPESA');
+            const totalDespesasGeral = todasDespesas.reduce((a, b) => a + b.valor, 0);
+
+            // SEPARANDO OS VETORES
+            const investido = todasDespesas.filter(i => i.categoria === 'Investimento').reduce((a, b) => a + b.valor, 0);
+            const gastos = todasDespesas.filter(i => i.categoria !== 'Investimento').reduce((a, b) => a + b.valor, 0);
+            const saldo = rec - totalDespesasGeral;
+
+            document.getElementById('display-saldo').innerText = formatar(saldo);
+            document.getElementById('display-receitas').innerText = formatar(rec);
+            document.getElementById('display-despesas').innerText = formatar(totalDespesasGeral);
+
+            // Texto no centro do gráfico
+            const percentual = rec > 0 ? Math.round((saldo / rec) * 100) : 0;
+            document.getElementById('chart-balanco').innerText = percentual + "%";
+            document.getElementById('chart-balanco').style.color = percentual >= 0 ? '#4e54c8' : '#d63031';
+
+            const listaDiv = document.getElementById('mini-lista'); listaDiv.innerHTML = '';
+            dados.slice(-5).reverse().forEach(d => {
+                listaDiv.innerHTML += `<div class="mini-item"><span>${d.descricao}</span><span style="color:${d.tipo==='RECEITA'?'var(--success)':'var(--danger)'}; font-weight:bold;">${d.valor}</span></div>`;
             });
-    }
 
-    function atualizarInterface(lista) {
-        const totalReceitas = lista.filter(i => i.tipo === 'RECEITA').reduce((acc, i) => acc + i.valor, 0);
-        const totalDespesas = lista.filter(i => i.tipo === 'DESPESA').reduce((acc, i) => acc + i.valor, 0);
-        const saldo = totalReceitas - totalDespesas;
+            // GRÁFICO ATUALIZADO (3 VETORES)
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            if (graficoInstance) graficoInstance.destroy();
 
-        document.getElementById('display-saldo').innerText = formatarMoeda(saldo);
-        document.getElementById('display-receitas').innerText = formatarMoeda(totalReceitas);
-        document.getElementById('display-despesas').innerText = formatarMoeda(totalDespesas);
-
-        const listaDiv = document.getElementById('lista-transacoes');
-        listaDiv.innerHTML = '';
-
-        lista.reverse().forEach(item => {
-            const isReceita = item.tipo === 'RECEITA';
-            const classeCor = isReceita ? 'money-in' : 'money-out';
-            const classeIcon = isReceita ? 'icon-in' : 'icon-out';
-            const icone = isReceita ? 'ph-trend-up' : 'ph-trend-down';
-            const sinal = isReceita ? '+' : '-';
-
-            const html = `
-                <div class="transaction-item">
-                    <div style="display: flex; align-items: center;">
-                        <div class="t-icon ${classeIcon}">
-                            <i class="ph ${icone}"></i>
-                        </div>
-                        <div class="t-info">
-                            <div class="t-title">${item.descricao}</div>
-                            <div class="t-date">${new Date(item.data).toLocaleDateString('pt-BR')} • ${item.categoria}</div>
-                        </div>
-                    </div>
-                    <div class="t-amount ${classeCor}">
-                        ${sinal} ${formatarMoeda(item.valor)}
-                    </div>
-                </div>
-            `;
-            listaDiv.innerHTML += html;
-        });
-    }
-
-    function atualizarGrafico(lista) {
-        const totalReceitas = lista.filter(i => i.tipo === 'RECEITA').reduce((acc, i) => acc + i.valor, 0);
-        const totalDespesas = lista.filter(i => i.tipo === 'DESPESA').reduce((acc, i) => acc + i.valor, 0);
-
-        let saldoDisponivel = totalReceitas - totalDespesas;
-        if (saldoDisponivel < 0) saldoDisponivel = 0;
-
-        const ctx = document.getElementById('meuGrafico').getContext('2d');
-
-        if (graficoInstance) {
-            graficoInstance.destroy();
-        }
-
-        graficoInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Saldo Disponível', 'Despesas'],
-                datasets: [{
-                    data: [saldoDisponivel, totalDespesas],
-                    backgroundColor: ['#00b894', '#d63031'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+            graficoInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Saldo Disponível', 'Gastos/Contas', 'Investido'],
+                    datasets: [{
+                        data: [Math.max(0, saldo), gastos, investido],
+                        backgroundColor: ['#4e54c8', '#d63031', '#f1c40f'], // Azul, Vermelho, Dourado
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { family: 'Poppins', size: 12 } } }
+                    }
                 }
-            }
+            });
         });
     }
 
     function cadastrar() {
-        const tipo = document.querySelector('input[name="tipo"]:checked').value;
-        const desc = document.getElementById('desc').value;
-        const valor = document.getElementById('valor').value;
-        const data = document.getElementById('data').value;
-        const cat = document.getElementById('cat').value;
+        const tipo = document.querySelector('input[name="tipo"]:checked').value; const desc = document.getElementById('desc').value; const valor = document.getElementById('valor').value; const data = document.getElementById('data').value; const cat = document.getElementById('cat').value;
+        if(!desc || !valor || !data) return alert("Preencha tudo");
+        fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({descricao: desc, valor: parseFloat(valor), data, categoria: cat, tipo}) }).then(() => { carregarFinanceiro(); document.getElementById('desc').value = ''; document.getElementById('valor').value = ''; });
+    }
 
-        if (!desc || !valor || !data) { alert("Preencha tudo!"); return; }
+    // CÂMBIO
+    function carregarCambio() {
+        fetch(CAM_URL).then(r => r.json()).then(dados => {
+            const grid = document.getElementById('grid-moedas'); const select = document.getElementById('sim-moeda'); grid.innerHTML = ''; select.innerHTML = '';
+            Object.keys(dados).forEach(key => {
+                const item = dados[key]; const codigoMoeda = item.code;
+                const info = mapaMoedas[codigoMoeda] || { nome: codigoMoeda, code: 'unknown', emoji: '🌐' };
+                const nomeExibicao = info.nome || item.name || codigoMoeda;
 
-        const nova = { descricao: desc, valor: parseFloat(valor), data: data, categoria: cat, tipo: tipo };
+                let img = item.code === 'BTC' ? 'https://cdn-icons-png.flaticon.com/512/5968/5968260.png' : `https://flagcdn.com/h80/${info.code}.png`;
+                const variacao = parseFloat(item.pctChange); const seta = variacao >= 0 ? '▲' : '▼'; const classe = variacao >= 0 ? 'up' : 'down';
 
-        fetch(API_URL, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(nova)
-        }).then(() => {
-            carregarDados();
-            document.getElementById('desc').value = '';
-            document.getElementById('valor').value = '';
+                grid.innerHTML += `
+                    <div class="currency-card">
+                        <img src="${img}" class="flag-img" alt="${nomeExibicao}">
+                        <div class="curr-code">${nomeExibicao}</div>
+                        <div class="curr-val">R$ ${parseFloat(item.bid).toFixed(2)}</div>
+                        <div class="curr-var ${classe}">${seta} ${variacao}%</div>
+                    </div>
+                `;
+
+                const option = document.createElement('option');
+                option.value = item.bid; option.text = `${info.emoji} ${codigoMoeda} - ${nomeExibicao}`;
+                select.appendChild(option);
+            });
+        });
+    }
+    function calcular() { const r = parseFloat(document.getElementById('sim-brl').value); const c = parseFloat(document.getElementById('sim-moeda').value); document.getElementById('sim-resultado').innerText = (r && c) ? (r/c).toFixed(2) : '0.00'; }
+
+    // INVESTIMENTOS
+    function carregarIndicadores() {
+        fetch(IND_URL).then(res => res.json()).then(dados => {
+            taxasOficiais = dados;
+            document.getElementById('taxa-selic').innerText = dados.selic + "% a.a.";
+            document.getElementById('taxa-cdi').innerText = dados.cdi.toFixed(2) + "% a.a.";
+            document.getElementById('taxa-lci').innerText = "~" + (dados.cdi * 0.90).toFixed(2) + "% a.a.";
+            document.getElementById('taxa-cra').innerText = "~" + (dados.cdi * 1.05).toFixed(2) + "% a.a.";
+            document.getElementById('taxa-deb').innerText = "~" + (dados.cdi * 1.20).toFixed(2) + "% a.a.";
         });
     }
 
-    carregarDados();
-</script>
+    function selectingInvestimento(nome, taxaAnual) {
+        document.getElementById('area-aporte').style.display = 'block'; document.getElementById('inv-desc').value = nome;
+        document.getElementById('inv-taxa').value = ((Math.pow((1 + (taxaAnual/100)), (1/12)) - 1) * 100).toFixed(4);
+        document.getElementById('inv-valor').focus();
+    }
+    function selecionarInvestimento(nome, taxaAnual) { selectingInvestimento(nome, taxaAnual); }
 
+    function fecharAporte() { document.getElementById('area-aporte').style.display = 'none'; }
+
+    function carregarInvestimentos() {
+        fetch(INV_URL).then(res => res.json()).then(lista => {
+            const grid = document.getElementById('lista-investimentos'); grid.innerHTML = '';
+            let totalPatrimonio = 0; let totalRendimento = 0;
+            lista.forEach(inv => {
+                totalPatrimonio += inv.valorAtual; totalRendimento += inv.rendimento;
+                grid.innerHTML += `
+                    <div class="inv-item">
+                        <button class="btn-resgate" onclick="resgatarInvestimento(${inv.id})">Sacar</button>
+                        <div class="inv-title">${inv.descricao}</div>
+                        <div class="inv-detail">Data: ${new Date(inv.dataCompra).toLocaleDateString('pt-BR')} • Taxa: ${inv.taxaMensal}%</div>
+                        <div class="inv-values">
+                            <div><div style="font-size:10px;color:#888;">Inicial</div><div style="font-weight:600;">${formatar(inv.valorInicial)}</div></div>
+                            <div style="text-align:right;"><div class="inv-profit">+${formatar(inv.rendimento)}</div><div class="inv-current">${formatar(inv.valorAtual)}</div></div>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('inv-total-geral').innerText = formatar(totalPatrimonio);
+            document.getElementById('inv-total-rendimento').innerText = '+' + formatar(totalRendimento);
+        });
+    }
+
+    function cadastrarInvestimento() {
+        const desc = document.getElementById('inv-desc').value; const valor = document.getElementById('inv-valor').value; const taxa = document.getElementById('inv-taxa').value; const data = document.getElementById('inv-data').value;
+        if(!desc || !valor || !taxa || !data) return alert("Preencha tudo!");
+        fetch(INV_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({descricao: desc, valorInicial: parseFloat(valor), taxaMensal: parseFloat(taxa), dataCompra: data}) })
+        .then(() => {
+            carregarInvestimentos();
+            carregarFinanceiro();
+            document.getElementById('inv-desc').value = ''; document.getElementById('inv-valor').value = '';
+            fecharAporte();
+        });
+    }
+
+    function resgatarInvestimento(id) {
+        if(confirm("Deseja resgatar este investimento? O valor atual será creditado no saldo.")) {
+            fetch(INV_URL + "/" + id, { method: 'DELETE' })
+            .then(() => {
+                carregarInvestimentos();
+                carregarFinanceiro();
+            });
+        }
+    }
+
+    carregarFinanceiro(); carregarCambio(); carregarIndicadores(); carregarInvestimentos();
+
+</script>
 </body>
 </html>
