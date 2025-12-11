@@ -22,6 +22,7 @@ public class Despesa {
     private double valor;
     private LocalDate data;
     private String categoria;
+    private String tipo;
 
     public Despesa(){
 
@@ -65,5 +66,13 @@ public class Despesa {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 }

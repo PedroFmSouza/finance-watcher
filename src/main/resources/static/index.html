@@ -2,132 +2,390 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Wallet Watcher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Watcher Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        /* Estilos básicos para ficar apresentável */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        /* --- VARIÁVEIS DE CORES (PALETA MODERNA) --- */
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+            --text-dark: #2d3436;
+            --text-light: #636e72;
+            --success: #00b894;
+            --danger: #d63031;
+        }
 
-        /* Estilo do Formulário */
-        .form-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; }
-        button { padding: 10px 20px; background-color: #2ecc71; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #27ae60; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 
-        /* Estilo da Tabela */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; }
-        th { background-color: #34495e; color: white; }
-        tr:hover { background-color: #f9f9f9; }
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--text-dark);
+        }
+
+        .app-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px); /* Efeito de vidro */
+            width: 100%;
+            max-width: 1100px;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            border: var(--glass-border);
+            display: grid;
+            grid-template-columns: 300px 1fr; /* Menu lateral + Conteúdo */
+            gap: 30px;
+        }
+
+        /* --- COLUNA DA ESQUERDA (RESUMO) --- */
+        .sidebar {
+            border-right: 1px solid #eee;
+            padding-right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+        }
+        .balance-card span { font-size: 14px; opacity: 0.8; }
+        .balance-card h2 { font-size: 28px; margin-top: 5px; }
+
+        .mini-stats { display: flex; flex-direction: column; gap: 10px; }
+        .stat-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-radius: 12px; background: #f8f9fa;
+        }
+        .stat-item.in { border-left: 4px solid var(--success); }
+        .stat-item.out { border-left: 4px solid var(--danger); }
+        .stat-label { font-size: 12px; color: var(--text-light); }
+        .stat-value { font-weight: 600; }
+
+        /* GRÁFICO */
+        .chart-container {
+            margin-top: auto;
+            position: relative;
+            height: 200px;
+        }
+
+        /* --- COLUNA DA DIREITA (AÇÃO E LISTA) --- */
+        .main-content { display: flex; flex-direction: column; gap: 25px; }
+
+        /* Formulário Bonito */
+        .new-transaction {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+        .form-title { font-size: 18px; margin-bottom: 15px; font-weight: 600; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+
+        /* Input Customizado */
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+            background: #fdfdfd;
+        }
+        input:focus, select:focus { border-color: var(--primary); background: #fff; }
+
+        /* Botão Moderno */
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.3s;
+            width: 100%;
+        }
+        .btn-add:hover { background: #5649c0; transform: translateY(-2px); }
+
+        /* Tabela Estilizada */
+        .transactions-list { overflow-y: auto; max-height: 400px; padding-right: 5px; }
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #f0f0f0;
+            transition: 0.2s;
+        }
+        .transaction-item:hover { transform: scale(1.01); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        .t-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .t-info { flex: 1; margin-left: 15px; }
+        .t-title { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+        .t-date { font-size: 12px; color: var(--text-light); }
+        .t-amount { font-weight: 600; }
+        .money-in { color: var(--success); }
+        .money-out { color: var(--danger); background: #ffeaea; }
+        .icon-in { background: #e0f9f4; color: var(--success); }
+        .icon-out { background: #ffeaea; color: var(--danger); }
+
+        /* Toggle Switch para Entrada/Saida */
+        .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .type-option {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid #f0f0f0;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + .type-option.opt-in {
+            background: #e0f9f4; border-color: var(--success); color: var(--success);
+        }
+        input[type="radio"]:checked + .type-option.opt-out {
+            background: #ffeaea; border-color: var(--danger); color: var(--danger);
+        }
+
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>💰 Wallet Watcher</h1>
+<div class="app-container">
+    <div class="sidebar">
+        <div class="logo">
+            <i class="ph ph-wallet"></i> WalletWatcher
+        </div>
 
-    <div class="form-group">
-        <input type="text" id="desc" placeholder="Descrição (Ex: Pizza)" required>
-        <input type="number" id="valor" placeholder="Valor (Ex: 50.00)" step="0.01" required>
-        <input type="date" id="data" required>
-        <select id="cat">
-            <option value="Alimentação">Alimentação</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Lazer">Lazer</option>
-            <option value="Contas">Contas</option>
-        </select>
-        <button onclick="cadastrarDespesa()">Adicionar</button>
+        <div class="balance-card">
+            <span>Saldo Total</span>
+            <h2 id="display-saldo">R$ 0,00</h2>
+        </div>
+
+        <div class="mini-stats">
+            <div class="stat-item in">
+                <div>
+                    <div class="stat-label">Entradas</div>
+                    <div class="stat-value" id="display-receitas">R$ 0,00</div>
+                </div>
+                <i class="ph ph-arrow-circle-down" style="color: var(--success); font-size: 24px;"></i>
+            </div>
+            <div class="stat-item out">
+                <div>
+                    <div class="stat-label">Saídas</div>
+                    <div class="stat-value" id="display-despesas">R$ 0,00</div>
+                </div>
+                <i class="ph ph-arrow-circle-up" style="color: var(--danger); font-size: 24px;"></i>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="meuGrafico"></canvas>
+        </div>
     </div>
 
-    <table id="tabela-despesas">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Descrição</th>
-            <th>Categoria</th>
-            <th>Data</th>
-            <th>Valor (R$)</th>
-        </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div class="main-content">
+        <div class="new-transaction">
+            <div class="form-title">Nova Transação</div>
+
+            <div class="type-toggle">
+                <label style="flex: 1;">
+                    <input type="radio" name="tipo" value="RECEITA" checked>
+                    <div class="type-option opt-in">Entrada</div>
+                </label>
+                <label style="flex: 1;">
+                    <input type="radio" name="tipo" value="DESPESA">
+                    <div class="type-option opt-out">Saída</div>
+                </label>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="desc" placeholder="Descrição (Ex: Freelance, Pizza)">
+                <input type="number" id="valor" placeholder="R$ 0,00" step="0.01">
+            </div>
+            <div class="input-group">
+                <select id="cat">
+                    <option value="Salário">Salário</option>
+                    <option value="Investimento">Investimento</option>
+                    <option value="Alimentação">Alimentação</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Casa">Casa</option>
+                    <option value="Lazer">Lazer</option>
+                </select>
+                <input type="date" id="data">
+            </div>
+
+            <button class="btn-add" onclick="cadastrar()">
+                <i class="ph ph-plus-circle" style="font-size: 20px;"></i>
+                Adicionar Transação
+            </button>
+        </div>
+
+        <h3 style="font-size: 16px; margin-top: 10px;">Últimas Movimentações</h3>
+        <div class="transactions-list" id="lista-transacoes">
+        </div>
+    </div>
 </div>
 
 <script>
     const API_URL = 'http://localhost:8080/despesas';
+    let graficoInstance = null; // Variável para guardar o gráfico
 
-    // 1. LISTAR (GET)
-    function carregarDespesas() {
+    function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function carregarDados() {
         fetch(API_URL)
             .then(res => res.json())
             .then(dados => {
-                const corpoTabela = document.querySelector('#tabela-despesas tbody');
-                corpoTabela.innerHTML = '';
-
-                // Ordenar por ID (do mais novo pro mais antigo opcional)
-                dados.forEach(d => {
-                    const linha = `
-                        <tr>
-                            <td>${d.id}</td>
-                            <td>${d.descricao}</td>
-                            <td>${d.categoria}</td>
-                            <td>${d.data}</td>
-                            <td style="color: #c0392b; font-weight: bold;">R$ ${d.valor.toFixed(2)}</td>
-                        </tr>
-                    `;
-                    corpoTabela.innerHTML += linha;
-                });
-            })
-            .catch(erro => console.error('Erro ao buscar:', erro));
+                atualizarInterface(dados);
+                atualizarGrafico(dados);
+            });
     }
 
-    // 2. CADASTRAR (POST)
-    function cadastrarDespesa() {
-        // Pegar os valores dos inputs
-        const descricao = document.getElementById('desc').value;
-        const valor = document.getElementById('valor').value;
-        const data = document.getElementById('data').value;
-        const categoria = document.getElementById('cat').value;
+    function atualizarInterface(lista) {
+        // 1. Cálculos
+        const totalReceitas = lista.filter(i => i.tipo === 'RECEITA').reduce((acc, i) => acc + i.valor, 0);
+        const totalDespesas = lista.filter(i => i.tipo === 'DESPESA').reduce((acc, i) => acc + i.valor, 0);
+        const saldo = totalReceitas - totalDespesas;
 
-        // Validação simples
-        if (!descricao || !valor || !data) {
-            alert("Preencha todos os campos!");
-            return;
+        // 2. Atualiza Textos
+        document.getElementById('display-saldo').innerText = formatarMoeda(saldo);
+        document.getElementById('display-receitas').innerText = formatarMoeda(totalReceitas);
+        document.getElementById('display-despesas').innerText = formatarMoeda(totalDespesas);
+
+        // 3. Preenche a Lista (Com ícones bonitos)
+        const listaDiv = document.getElementById('lista-transacoes');
+        listaDiv.innerHTML = '';
+
+        lista.reverse().forEach(item => {
+            const isReceita = item.tipo === 'RECEITA';
+            const classeCor = isReceita ? 'money-in' : 'money-out';
+            const classeIcon = isReceita ? 'icon-in' : 'icon-out';
+            const icone = isReceita ? 'ph-trend-up' : 'ph-trend-down';
+            const sinal = isReceita ? '+' : '-';
+
+            const html = `
+                <div class="transaction-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="t-icon ${classeIcon}">
+                            <i class="ph ${icone}"></i>
+                        </div>
+                        <div class="t-info">
+                            <div class="t-title">${item.descricao}</div>
+                            <div class="t-date">${new Date(item.data).toLocaleDateString('pt-BR')} • ${item.categoria}</div>
+                        </div>
+                    </div>
+                    <div class="t-amount ${classeCor}">
+                        ${sinal} ${formatarMoeda(item.valor)}
+                    </div>
+                </div>
+            `;
+            listaDiv.innerHTML += html;
+        });
+    }
+
+    // --- GRÁFICO CHART.JS (O toque final de profissionalismo) ---
+    function atualizarGrafico(lista) {
+        const totalReceitas = lista.filter(i => i.tipo === 'RECEITA').reduce((acc, i) => acc + i.valor, 0);
+        const totalDespesas = lista.filter(i => i.tipo === 'DESPESA').reduce((acc, i) => acc + i.valor, 0);
+
+        const ctx = document.getElementById('meuGrafico').getContext('2d');
+
+        // Se o gráfico já existe, destrói ele antes de criar um novo (pra não bugar)
+        if (graficoInstance) {
+            graficoInstance.destroy();
         }
 
-        // Montar o objeto (Igual a gente fazia no JSON do terminal)
-        const novaDespesa = {
-            descricao: descricao,
-            valor: parseFloat(valor),
-            data: data,
-            categoria: categoria
-        };
-
-        // Enviar pro Java
-        fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        graficoInstance = new Chart(ctx, {
+            type: 'doughnut', // Gráfico de Rosca
+            data: {
+                labels: ['Entradas', 'Saídas'],
+                datasets: [{
+                    data: [totalReceitas, totalDespesas],
+                    backgroundColor: ['#00b894', '#d63031'],
+                    borderWidth: 0
+                }]
             },
-            body: JSON.stringify(novaDespesa) // Transforma o objeto JS em texto JSON
-        })
-        .then(res => {
-            if (res.ok) {
-                // Se deu certo: Limpa os campos e recarrega a tabela
-                document.getElementById('desc').value = '';
-                document.getElementById('valor').value = '';
-                carregarDespesas(); // Chama a listagem de novo pra aparecer o item novo
-            } else {
-                alert("Erro ao salvar!");
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
             }
-        })
-        .catch(erro => console.error('Erro ao salvar:', erro));
+        });
     }
 
-    // Iniciar carregando
-    carregarDespesas();
+    function cadastrar() {
+        const tipo = document.querySelector('input[name="tipo"]:checked').value;
+        const desc = document.getElementById('desc').value;
+        const valor = document.getElementById('valor').value;
+        const data = document.getElementById('data').value;
+        const cat = document.getElementById('cat').value;
+
+        if (!desc || !valor || !data) { alert("Preencha tudo!"); return; }
+
+        const nova = { descricao: desc, valor: parseFloat(valor), data: data, categoria: cat, tipo: tipo };
+
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(nova)
+        }).then(() => {
+            carregarDados();
+            document.getElementById('desc').value = '';
+            document.getElementById('valor').value = '';
+        });
+    }
+
+    carregarDados();
 </script>
 
 </body>
