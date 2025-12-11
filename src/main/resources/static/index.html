@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- VARIÁVEIS DE CORES (PALETA MODERNA) --- */
+
         :root {
             --primary: #6c5ce7;
             --secondary: #a29bfe;
@@ -50,7 +50,7 @@
             gap: 30px;
         }
 
-        /* --- COLUNA DA ESQUERDA (RESUMO) --- */
+
         .sidebar {
             border-right: 1px solid #eee;
             padding-right: 20px;
@@ -89,17 +89,17 @@
         .stat-label { font-size: 12px; color: var(--text-light); }
         .stat-value { font-weight: 600; }
 
-        /* GRÁFICO */
+
         .chart-container {
             margin-top: auto;
             position: relative;
             height: 200px;
         }
 
-        /* --- COLUNA DA DIREITA (AÇÃO E LISTA) --- */
+
         .main-content { display: flex; flex-direction: column; gap: 25px; }
 
-        /* Formulário Bonito */
+
         .new-transaction {
             background: #fff;
             padding: 20px;
@@ -110,7 +110,6 @@
 
         .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
 
-        /* Input Customizado */
         input, select {
             width: 100%;
             padding: 12px 15px;
@@ -123,7 +122,6 @@
         }
         input:focus, select:focus { border-color: var(--primary); background: #fff; }
 
-        /* Botão Moderno */
         .btn-add {
             background: var(--primary);
             color: white;
@@ -141,7 +139,7 @@
         }
         .btn-add:hover { background: #5649c0; transform: translateY(-2px); }
 
-        /* Tabela Estilizada */
+
         .transactions-list { overflow-y: auto; max-height: 400px; padding-right: 5px; }
         .transaction-item {
             display: flex;
@@ -171,7 +169,7 @@
         .icon-in { background: #e0f9f4; color: var(--success); }
         .icon-out { background: #ffeaea; color: var(--danger); }
 
-        /* Toggle Switch para Entrada/Saida */
+
         .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
         .type-option {
             flex: 1;
@@ -274,7 +272,7 @@
 
 <script>
     const API_URL = 'http://localhost:8080/despesas';
-    let graficoInstance = null; // Variável para guardar o gráfico
+    let graficoInstance = null;
 
     function formatarMoeda(valor) {
         return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -290,17 +288,14 @@
     }
 
     function atualizarInterface(lista) {
-        // 1. Cálculos
         const totalReceitas = lista.filter(i => i.tipo === 'RECEITA').reduce((acc, i) => acc + i.valor, 0);
         const totalDespesas = lista.filter(i => i.tipo === 'DESPESA').reduce((acc, i) => acc + i.valor, 0);
         const saldo = totalReceitas - totalDespesas;
 
-        // 2. Atualiza Textos
         document.getElementById('display-saldo').innerText = formatarMoeda(saldo);
         document.getElementById('display-receitas').innerText = formatarMoeda(totalReceitas);
         document.getElementById('display-despesas').innerText = formatarMoeda(totalDespesas);
 
-        // 3. Preenche a Lista (Com ícones bonitos)
         const listaDiv = document.getElementById('lista-transacoes');
         listaDiv.innerHTML = '';
 
@@ -331,24 +326,25 @@
         });
     }
 
-    // --- GRÁFICO CHART.JS (O toque final de profissionalismo) ---
     function atualizarGrafico(lista) {
         const totalReceitas = lista.filter(i => i.tipo === 'RECEITA').reduce((acc, i) => acc + i.valor, 0);
         const totalDespesas = lista.filter(i => i.tipo === 'DESPESA').reduce((acc, i) => acc + i.valor, 0);
 
+        let saldoDisponivel = totalReceitas - totalDespesas;
+        if (saldoDisponivel < 0) saldoDisponivel = 0;
+
         const ctx = document.getElementById('meuGrafico').getContext('2d');
 
-        // Se o gráfico já existe, destrói ele antes de criar um novo (pra não bugar)
         if (graficoInstance) {
             graficoInstance.destroy();
         }
 
         graficoInstance = new Chart(ctx, {
-            type: 'doughnut', // Gráfico de Rosca
+            type: 'doughnut',
             data: {
-                labels: ['Entradas', 'Saídas'],
+                labels: ['Saldo Disponível', 'Despesas'],
                 datasets: [{
-                    data: [totalReceitas, totalDespesas],
+                    data: [saldoDisponivel, totalDespesas],
                     backgroundColor: ['#00b894', '#d63031'],
                     borderWidth: 0
                 }]
